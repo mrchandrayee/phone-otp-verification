@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#e9e7ff">
+<title>Phone OTP Verification</title>
+<style>
+:root{
+  --page:#e9e7ff;
+  --card:#fff;
+  --purple:#4938e8;
+  --purple-dark:#3928c9;
+  --ink:#25243a;
+  --muted:#77758b;
+  --green:#16b77d;
+  --red:#e34b58;
+}
+*{box-sizing:border-box}
+body{
+  min-height:100vh;
+  margin:0;
+  padding:24px;
+  display:grid;
+  place-items:center;
+  background:var(--page);
+  color:var(--ink);
+  font-family:Inter,Arial,sans-serif;
+}
+.app{width:min(100%,420px)}
+h1{
+  margin:0 0 30px;
+  text-align:center;
+  color:#397ce0;
+  font-size:clamp(23px,4vw,30px);
+  font-weight:800;
+}
+.card{
+  width:100%;
+  min-height:198px;
+  padding:23px 20px 19px;
+  border-radius:13px;
+  background:var(--card);
+  box-shadow:0 9px 25px rgba(45,39,110,.10);
+  text-align:center;
+  animation:cardIn .35s ease both;
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.view{display:none}
+.view.active{display:block}
+h2{margin:0 0 5px;font-size:17px;font-weight:750}
+.description{margin:0 auto 12px;color:var(--muted);font-size:10px;line-height:1.5}
+.phone-input{
+  width:100%;height:34px;padding:0 12px;
+  border:1.5px solid #7a70f1;border-radius:6px;
+  background:#fff;color:#29283b;
+  text-align:center;font:12px Inter,Arial,sans-serif;
+  outline:none;transition:.2s;
+}
+.phone-input:focus,.otp-digit:focus{
+  border-color:#4938e8;
+  box-shadow:0 0 0 3px rgba(73,56,232,.12);
+}
+.primary{
+  width:100%;height:34px;margin-top:8px;
+  border:0;border-radius:6px;
+  background:var(--purple);color:#fff;
+  font-size:11px;font-weight:700;
+  cursor:pointer;transition:background .2s,transform .2s,box-shadow .2s;
+}
+.primary:hover{background:var(--purple-dark);box-shadow:0 5px 12px rgba(73,56,232,.2)}
+.primary:active{transform:translateY(1px)}
+.primary:disabled{opacity:.55;cursor:not-allowed}
+.otp-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:18px 0 0}
+.otp-digit{
+  min-width:0;width:100%;height:39px;
+  border:1.5px solid #e1e0eb;border-radius:7px;
+  background:#fff;color:#27243d;
+  text-align:center;font-size:16px;font-weight:700;
+  outline:none;transition:.2s;
+}
+.otp-digit:focus{border-color:#7165ee;box-shadow:0 0 0 3px rgba(73,56,232,.1)}
+.otp-digit.filled{border-color:#8d83f2}
+.message{display:none;margin:9px 0 0;font-size:10px;line-height:1.4}
+.message.show{display:block}
+.message.error{color:var(--red)}
+.message.success{color:var(--green)}
+.success-view{padding:17px 4px 10px}
+.success-icon{
+  width:54px;height:54px;margin:0 auto 12px;
+  display:grid;place-items:center;border-radius:50%;
+  background:var(--green);color:white;font-size:30px;
+  box-shadow:0 5px 13px rgba(22,183,125,.2);
+}
+.success-view h2{font-size:16px;margin-bottom:5px}
+.success-view p{margin:0;color:var(--muted);font-size:10px}
+.back{
+  display:inline-block;margin-top:13px;padding:0;
+  border:0;background:none;color:var(--purple);
+  font-size:10px;font-weight:700;cursor:pointer;
+}
+@media(max-width:420px){body{padding:18px}.card{padding:21px 17px 18px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<main class="app">
+  <h1>Phone OTP verification</h1>
+  <section class="card">
+    <div class="view active" id="phoneView">
+      <h2>Verify Your Phone</h2>
+      <p class="description">We will send you a 4-digit one-time password.</p>
+      <form id="phoneForm">
+        <input class="phone-input" id="phoneNumber" type="tel" inputmode="tel" autocomplete="tel" placeholder="Enter Mobile Number" aria-label="Enter Mobile Number" required>
+        <button class="primary" type="submit">Send OTP</button>
+        <p class="message error" id="phoneMessage" role="alert"></p>
+      </form>
+    </div>
+
+    <div class="view" id="otpView">
+      <h2>Enter OTP</h2>
+      <p class="description">We've sent a code to your phone. (Use demo code: 1234)</p>
+      <form id="otpForm">
+        <div class="otp-row" id="otpRow" aria-label="Four digit one-time password">
+          <input class="otp-digit" inputmode="numeric" autocomplete="one-time-code" maxlength="1" aria-label="OTP digit 1" required>
+          <input class="otp-digit" inputmode="numeric" maxlength="1" aria-label="OTP digit 2" required>
+          <input class="otp-digit" inputmode="numeric" maxlength="1" aria-label="OTP digit 3" required>
+          <input class="otp-digit" inputmode="numeric" maxlength="1" aria-label="OTP digit 4" required>
+        </div>
+        <button class="primary" type="submit">Verify Code</button>
+        <p class="message error" id="otpMessage" role="alert"></p>
+      </form>
+      <button class="back" type="button" id="changePhone">Change phone number</button>
+    </div>
+
+    <div class="view success-view" id="successView">
+      <div class="success-icon" aria-hidden="true">✓</div>
+      <h2>Verification Successful!</h2>
+      <p>Your account has been safely verified.</p>
+      <button class="back" type="button" id="restart">Verify another number</button>
+    </div>
+  </section>
+</main>
+<script>
+(() => {
+  const phoneView = document.getElementById('phoneView');
+  const otpView = document.getElementById('otpView');
+  const successView = document.getElementById('successView');
+  const phoneForm = document.getElementById('phoneForm');
+  const otpForm = document.getElementById('otpForm');
+  const phoneNumber = document.getElementById('phoneNumber');
+  const phoneMessage = document.getElementById('phoneMessage');
+  const otpMessage = document.getElementById('otpMessage');
+  const otpInputs = [...document.querySelectorAll('.otp-digit')];
+  let verifiedPhone = '';
+
+  function showView(view) {
+    [phoneView, otpView, successView].forEach(item => item.classList.toggle('active', item === view));
+  }
+  function showError(element, text) {
+    element.textContent = text;
+    element.classList.add('show');
+  }
+  function clearError(element) {
+    element.textContent = '';
+    element.classList.remove('show');
+  }
+  function clearOtp() {
+    otpInputs.forEach(input => {
+      input.value = '';
+      input.classList.remove('filled');
+    });
+  }
+
+  phoneForm.addEventListener('submit', event => {
+    event.preventDefault();
+    clearError(phoneMessage);
+    const phone = phoneNumber.value.trim();
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length < 7 || digits.length > 15) {
+      showError(phoneMessage, 'Please enter a valid mobile number.');
+      phoneNumber.focus();
+      return;
+    }
+    verifiedPhone = phone;
+    clearOtp();
+    showView(otpView);
+    otpInputs[0].focus();
+  });
+
+  otpInputs.forEach((input, index) => {
+    input.addEventListener('input', () => {
+      input.value = input.value.replace(/\D/g, '').slice(-1);
+      input.classList.toggle('filled', !!input.value);
+      clearError(otpMessage);
+      if (input.value && index < otpInputs.length - 1) otpInputs[index + 1].focus();
+    });
+    input.addEventListener('keydown', event => {
+      if (event.key === 'Backspace' && !input.value && index > 0) otpInputs[index - 1].focus();
+      if (event.key === 'ArrowLeft' && index > 0) otpInputs[index - 1].focus();
+      if (event.key === 'ArrowRight' && index < otpInputs.length - 1) otpInputs[index + 1].focus();
+    });
+    input.addEventListener('paste', event => {
+      const value = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
+      if (!value) return;
+      event.preventDefault();
+      value.split('').forEach((digit, i) => {
+        otpInputs[i].value = digit;
+        otpInputs[i].classList.add('filled');
+      });
+      otpInputs[Math.min(value.length, 3)].focus();
+      clearError(otpMessage);
+    });
+  });
+
+  otpForm.addEventListener('submit', event => {
+    event.preventDefault();
+    clearError(otpMessage);
+    const code = otpInputs.map(input => input.value).join('');
+    if (code.length !== 4) {
+      showError(otpMessage, 'Please enter all 4 digits.');
+      otpInputs.find(input => !input.value)?.focus();
+      return;
+    }
+    if (code !== '1234') {
+      showError(otpMessage, 'Incorrect OTP! Please try again. Hint: 1234');
+      otpInputs[3].focus();
+      otpInputs[3].select();
+      return;
+    }
+    showView(successView);
+  });
+
+  document.getElementById('changePhone').addEventListener('click', () => {
+    clearError(otpMessage);
+    showView(phoneView);
+    phoneNumber.focus();
+  });
+  document.getElementById('restart').addEventListener('click', () => {
+    phoneNumber.value = '';
+    verifiedPhone = '';
+    clearOtp();
+    showView(phoneView);
+    phoneNumber.focus();
+  });
+})();
+</script>
+</body>
+</html>
